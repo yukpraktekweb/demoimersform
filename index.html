@@ -267,7 +267,8 @@
     // ================= STATE =================
     const state = {
       isLoggedIn: false,
-      apiUrl: localStorage.getItem('imers_apiUrl') || '',
+      // Menggunakan URL deploy yang baru Anda berikan sebagai default
+      apiUrl: localStorage.getItem('imers_apiUrl') || 'https://script.google.com/macros/s/AKfycbzPJxjrjvVVE5YvSJ-nN0XGotEfzf-mOPfVbmQ6U4fxPl2VxVkgRah6fDfFpsDPeEor/exec',
       forms: [],
       submissions: [],
       invoices: [],
@@ -342,16 +343,22 @@
         const main = document.getElementById('main-content');
         
         if (hash === '#/dashboard') renderDashboard(main);
-        else if (hash === '#/settings') renderSettings(main);
-        else if (hash === '#/forms') renderForms(main);
-        else if (hash.startsWith('#/builder/')) renderBuilder(main, hash.replace('#/builder/', ''));
-        else if (hash === '#/submissions') renderSubmissions(main);
-        else if (hash === '#/invoices') renderInvoices(main);
-      }
+      else if (hash === '#/settings') renderSettings(main);
+      else if (hash === '#/forms') renderForms(main);
+      else if (hash.startsWith('#/builder/')) renderBuilder(main, hash.replace('#/builder/', ''));
+      else if (hash === '#/submissions') renderSubmissions(main);
+      else if (hash === '#/invoices') renderInvoices(main);
     }
+  }
 
-    window.addEventListener('hashchange', router);
+  window.addEventListener('hashchange', router);
+  
+  // Panggil router pertama kali saat halaman dimuat agar tidak blank
+  router();
 
+  // ================= VIEWS =================
+
+  // 1. LOGIN
     // ================= VIEWS =================
 
     // 1. LOGIN
@@ -366,13 +373,12 @@
             
             <form id="loginForm">
               <div class="input-group" style="text-align:left;">
-                <label>Apps Script API URL</label>
-                <input type="url" id="inpApi" class="input-control" required placeholder="https://script.google.com/macros/s/.../exec" value="${state.apiUrl}">
-                <div style="font-size:12px; color:var(--text-soft); margin-top:8px;">Pastikan API sudah di-deploy dengan akses "Anyone".</div>
+                <label>Email</label>
+                <input type="email" id="inpEmail" class="input-control" required placeholder="admin@imersform.com">
               </div>
               <div class="input-group" style="text-align:left;">
-                <label>PIN Admin</label>
-                <input type="password" id="inpPin" class="input-control" required placeholder="••••••">
+                <label>Password</label>
+                <input type="password" id="inpPass" class="input-control" required placeholder="••••••••">
               </div>
               <button type="submit" class="btn btn-primary" style="width:100%; padding:14px; font-size:16px;" id="btnLogin">Masuk</button>
             </form>
@@ -383,20 +389,18 @@
       document.getElementById('loginForm').onsubmit = async (e) => {
         e.preventDefault();
         const btn = document.getElementById('btnLogin');
-        const apiUrl = document.getElementById('inpApi').value;
-        const pin = document.getElementById('inpPin').value;
+        const email = document.getElementById('inpEmail').value;
+        const pass = document.getElementById('inpPass').value;
         
         btn.innerHTML = '<div class="loader" style="width:20px;height:20px;border-width:3px;"></div>';
         
-        state.apiUrl = apiUrl;
-        const res = await apiCall({ action: 'checkLogin', pin: pin });
+        const res = await apiCall({ action: 'checkLogin', email: email, password: pass });
         
         if (res.success) {
-          localStorage.setItem('imers_apiUrl', apiUrl);
           state.isLoggedIn = true;
           window.location.hash = '#/dashboard';
         } else {
-          alert(res.message || 'Koneksi atau PIN salah');
+          alert(res.message || 'Email atau Password salah');
           btn.innerHTML = 'Masuk';
         }
       };
