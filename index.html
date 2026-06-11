@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iMersForm - Modern Form Builder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    /* ================= DESIGN SYSTEM (Pastel Premium) ================= */
+    :root {
+      --bg-main: #F7FBF8;
+      --bg-card: #FFFFFF;
+      --primary: #9FE7D7;
+      --primary-dark: #7DBDB0;
+      --secondary: #BFD8B8;
+      --accent-aqua: #A7D8F0;
+      --text-main: #1F2A2E;
+      --text-soft: #6B7A7D;
+      --border-soft: #E6EFEC;
+      --success-bg: #E9FFF6;
+      --success-text: #22664D;
+      --danger-bg: #FFF0EE;
+      --danger-text: #B24035;
+      --radius-sm: 12px;
+      --radius-md: 18px;
+      --radius-lg: 24px;
+      --shadow-sm: 0 4px 12px rgba(31,42,46,0.04);
+      --shadow-md: 0 12px 32px rgba(31,42,46,0.06);
+      --shadow-lg: 0 20px 60px rgba(31,42,46,0.08);
+      --font-main: 'Inter', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: var(--font-main);
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+    }
+
+    a { text-decoration: none; color: inherit; }
+    button { font-family: inherit; }
+
+    /* ================= LAYOUT ================= */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar Admin */
+    .sidebar {
+      width: 260px;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border-soft);
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      z-index: 10;
+    }
+
+    .brand {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 48px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, var(--primary-dark), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--text-soft);
+      transition: .2s;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      background: var(--bg-main);
+      color: var(--text-main);
+    }
+    .nav-item.active i { color: var(--primary-dark); }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: 260px;
+      padding: 40px 48px;
+      max-width: 1200px;
+    }
+
+    /* ================= COMPONENTS ================= */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-soft);
+      padding: 32px;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 24px;
+    }
+
+    h1.page-title {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 32px;
+    }
+
+    h2.section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 12px 20px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: var(--text-main);
+      font-weight: 700;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border-soft);
+      color: var(--text-main);
+    }
+    .btn-outline:hover { border-color: var(--primary); }
+
+    .btn-danger {
+      background: var(--danger-bg);
+      color: var(--danger-text);
+    }
+
+    .input-group { margin-bottom: 20px; }
+    .input-group label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px;}
+    .input-control {
+      width: 100%;
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      font-size: 15px;
+      font-family: var(--font-main);
+      outline: none;
+      transition: .2s;
+      background: var(--bg-main);
+    }
+    .input-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(159,231,215,.28);
+      background: var(--bg-card);
+    }
+
+    /* Table */
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 16px; text-align: left; border-bottom: 1px solid var(--border-soft); }
+    th { font-weight: 600; color: var(--text-soft); font-size: 14px; }
+    tr:last-child td { border-bottom: none; }
+    
+    .badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--bg-main);
+    }
+    .badge-wa { background: #E4F7ED; color: #1E6646; }
+    .badge-inv { background: var(--accent-aqua); color: #1A4D66; opacity: 0.8;}
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(31,42,46,0.4);
+      backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+      opacity: 0; pointer-events: none; transition: .3s;
+    }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+    
+    .modal-content {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      width: 90%; max-width: 600px;
+      box-shadow: var(--shadow-lg);
+      transform: translateY(20px); transition: .3s;
+      max-height: 90vh; overflow-y: auto;
+    }
+    .modal-overlay.active .modal-content { transform: translateY(0); }
+    
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .modal-close { cursor: pointer; font-size: 24px; color: var(--text-soft); }
+
+    /* Code Block untuk Embed */
+    .code-block {
+      background: #111827;
+      color: #A7F3D0;
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      font-family: monospace;
+      font-size: 13px;
+      overflow-x: auto;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Public Layouts */
+    .public-layout {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    /* Spinner */
+    .loader {
+      border: 4px solid var(--border-soft);
+      border-top: 4px solid var(--primary-dark);
+      border-radius: 50%;
+      width: 32px; height: 32px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .main-content { margin-left: 0; padding: 24px; }
+      .app-container.menu-open .sidebar { transform: translateX(0); box-shadow: var(--shadow-lg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app"></div>
+
+  <!-- STATE & LOGIC -->
+  <script>
+    // ================= STATE =================
+    const state = {
+      isLoggedIn: false,
+      apiUrl: localStorage.getItem('imers_apiUrl') || '',
+      forms: [],
+      submissions: [],
+      invoices: [],
+      currentForm: null,
+      currentFields: []
+    };
+
+    const getBaseUrl = () => window.location.origin + window.location.pathname;
+
+    // ================= API HELPERS =================
+    async function apiCall(payload) {
+      if (!state.apiUrl && payload.action !== 'checkLogin') {
+        alert("API URL belum di set. Silakan set di Settings.");
+        window.location.hash = '#/settings';
+        return { success: false };
+      }
+      try {
+        const response = await fetch(state.apiUrl, {
+          method: 'POST',
+          body: JSON.stringify(payload) // Plain text to bypass CORS OPTIONS preflight issue in GAS
+        });
+        return await response.json();
+      } catch (err) {
+        console.error(err);
+        return { success: false, message: 'Gagal terhubung ke server.' };
+      }
+    }
+
+    // ================= ROUTER =================
+    const appDiv = document.getElementById('app');
+
+    function router() {
+      let hash = window.location.hash || '#/dashboard';
+      appDiv.innerHTML = ''; // Clear
+
+      if (hash.startsWith('#/form/')) {
+        renderPublicForm(hash.replace('#/form/', ''));
+        return;
+      }
+      if (hash.startsWith('#/invoice/')) {
+        renderPublicInvoice(hash.replace('#/invoice/', ''));
+        return;
+      }
+
+      if (!state.isLoggedIn && hash !== '#/login') {
+        window.location.hash = '#/login';
+        return;
+      }
+
+      if (hash === '#/login') renderLogin();
+      else {
+        // Admin Wrapper
+        appDiv.innerHTML = `
+          <div class="app-container">
+            <aside class="sidebar">
+              <div class="brand"><i class="ph-fill ph-shapes"></i> iMersForm</div>
+              <a href="#/dashboard" class="nav-item ${hash==='#/dashboard'?'active':''}"><i class="ph ph-squares-four"></i> Dashboard</a>
+              <a href="#/forms" class="nav-item ${hash.startsWith('#/forms')||hash.startsWith('#/builder')?'active':''}"><i class="ph ph-list-dashes"></i> Forms</a>
+              <a href="#/submissions" class="nav-item ${hash==='#/submissions'?'active':''}"><i class="ph ph-tray"></i> Submissions</a>
+              <a href="#/invoices" class="nav-item ${hash==='#/invoices'?'active':''}"><i class="ph ph-receipt"></i> Invoices</a>
+              <a href="#/settings" class="nav-item ${hash==='#/settings'?'active':''}"><i class="ph ph-gear"></i> Settings</a>
+              <div style="margin-top:auto">
+                <a href="#" onclick="logout()" class="nav-item"><i class="ph ph-sign-out"></i> Logout</a>
+              </div>
+            </aside>
+            <main class="main-content" id="main-content">
+              <div class="loader" style="margin-top:100px;"></div>
+            </main>
+          </div>
+        `;
+        
+        const main = document.getElementById('main-content');
+        
+        if (hash === '#/dashboard') renderDashboard(main);
+        else if (hash === '#/settings') renderSettings(main);
+        else if (hash === '#/forms') renderForms(main);
+        else if (hash.startsWith('#/builder/')) renderBuilder(main, hash.replace('#/builder/', ''));
+        else if (hash === '#/submissions') renderSubmissions(main);
+        else if (hash === '#/invoices') renderInvoices(main);
+      }
+    }
+
+    window.addEventListener('hashchange', router);
+
+    // ================= VIEWS =================
+
+    // 1. LOGIN
+    function renderLogin() {
+      appDiv.innerHTML = `
+        <div class="public-layout">
+          <div class="card" style="width:100%; max-width:400px; text-align:center;">
+            <div class="brand" style="justify-content:center; font-size:32px; margin-bottom:16px;">
+              <i class="ph-fill ph-shapes"></i> iMersForm
+            </div>
+            <p style="color:var(--text-soft); margin-bottom:32px;">Masuk ke Admin Dashboard</p>
+            
+            <form id="loginForm">
+              <div class="input-group" style="text-align:left;">
+                <label>Apps Script API URL</label>
+                <input type="url" id="inpApi" class="input-control" required placeholder="https://script.google.com/macros/s/.../exec" value="${state.apiUrl}">
+                <div style="font-size:12px; color:var(--text-soft); margin-top:8px;">Pastikan API sudah di-deploy dengan akses "Anyone".</div>
+              </div>
+              <div class="input-group" style="text-align:left;">
+                <label>PIN Admin</label>
+                <input type="password" id="inpPin" class="input-control" required placeholder="••••••">
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%; padding:14px; font-size:16px;" id="btnLogin">Masuk</button>
+            </form>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('loginForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btnLogin');
+        const apiUrl = document.getElementById('inpApi').value;
+        const pin = document.getElementById('inpPin').value;
+        
+        btn.innerHTML = '<div class="loader" style="width:20px;height:20px;border-width:3px;"></div>';
+        
+        state.apiUrl = apiUrl;
+        const res = await apiCall({ action: 'checkLogin', pin: pin });
+        
+        if (res.success) {
+          localStorage.setItem('imers_apiUrl', apiUrl);
+          state.isLoggedIn = true;
+          window.location.hash = '#/dashboard';
+        } else {
+          alert(res.message || 'Koneksi atau PIN salah');
+          btn.innerHTML = 'Masuk';
+        }
+      };
+    }
+
+    function logout() {
+      state.isLoggedIn = false;
+      window.location.hash = '#/login';
+    }
+
+    // 2. DASHBOARD
+    async function renderDashboard(container) {
+      const res = await apiCall({ action: 'getForms' });
+      const subs = await apiCall({ action: 'getSubmissions' });
+      
+      if(res.success) state.forms = res.data;
+
+      container.innerHTML = `
+        <h1 class="page-title">Dashboard</h1>
+        <div style="display:flex; gap:24px; margin-bottom:32px;">
+          <div class="card" style="flex:1;">
+            <div style="color:var(--text-soft); font-weight:600;">Total Form</div>
+            <div style="font-size:40px; font-weight:800; color:var(--primary-dark);">${state.forms.length}</div>
+          </div>
+          <div class="card" style="flex:1;">
+            <div style="color:var(--text-soft); font-weight:600;">Total Submission</div>
+            <div style="font-size:40px; font-weight:800; color:var(--text-main);">${subs.data ? subs.data.length : 0}</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Setup Database Awal</h2>
+          <p style="color:var(--text-soft); margin-bottom:16px;">Jika ini pertama kali dijalankan, klik tombol ini untuk membuat sheet di Spreadsheet.</p>
+          <button class="btn btn-outline" onclick="setupDb()">Jalankan Setup Database</button>
+        </div>
+      `;
+    }
+
+    async function setupDb() {
+      const res = await apiCall({ action: 'setupDatabase' });
+      alert(res.message);
+    }
+
+    // 3. SETTINGS
+    function renderSettings(container) {
+      container.innerHTML = `
+        <h1 class="page-title">Settings</h1>
+        <div class="card" style="max-width:600px;">
+          <div class="input-group">
+            <label>API URL (Google Apps Script)</label>
+            <input type="text" id="setApi" class="input-control" value="${state.apiUrl}">
+          </div>
+          <button class="btn btn-primary" onclick="saveSettings()">Simpan Pengaturan</button>
+        </div>
+      `;
+    }
+    function saveSettings() {
+      const url = document.getElementById('setApi').value;
+      localStorage.setItem('imers_apiUrl', url);
+      state.apiUrl = url;
+      alert('Tersimpan');
+    }
+
+    // 4. FORMS LIST
+    async function renderForms(container) {
+      const res = await apiCall({ action: 'getForms' });
+      state.forms = res.data || [];
+
+      let trs = state.forms.map(f => `
+        <tr>
+          <td style="font-weight:600;">${f.formName}</td>
+          <td>
+            <span class="badge ${f.type === 'whatsapp_order' ? 'badge-wa' : f.type === 'invoice' ? 'badge-inv' : ''}">
+              ${f.type === 'whatsapp_order' ? 'WhatsApp' : f.type === 'invoice' ? 'Invoice' : 'Standard'}
+            </span>
+          </td>
+          <td>/${f.slug}</td>
+          <td>
+            <div style="display:flex; gap:8px;">
+              <a href="#/builder/${f.formId}" class="btn btn-outline" style="padding:8px 12px;"><i class="ph ph-pencil-simple"></i> Builder</a>
+              <button class="btn btn-primary" style="padding:8px 12px;" onclick="openEmbedModal('${f.slug}')"><i class="ph ph-code"></i> Embed</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      if(state.forms.length === 0) trs = `<tr><td colspan="4" style="text-align:center; padding:32px; color:var(--text-soft);">Belum ada form.</td></tr>`;
+
+      container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:32px;">
+          <h1 class="page-title" style="margin:0;">Forms</h1>
+          <button class="btn btn-primary" onclick="openFormModal()"><i class="ph ph-plus"></i> Buat Form</button>
+        </div>
+        <div class="card table-container">
+          <table>
+            <thead><tr><th>Nama Form</th><th>Tipe</th><th>Slug</th><th>Aksi</th></tr></thead>
+            <tbody>${trs}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // 5. FORM BUILDER (Fields)
+    async function renderBuilder(container, formId) {
+      if(!state.forms.length) {
+        const resForm = await apiCall({ action: 'getForms' });
+        state.forms = resForm.data;
+      }
+      const form = state.forms.find(f => f.formId === formId);
+      if(!form) return window.location.hash = '#/forms';
+
+      state.currentForm = form;
+      
+      const resFields = await apiCall({ action: 'getFields', formId: formId });
+      state.currentFields = resFields.data || [];
+
+      let trs = state.currentFields.map(f => `
+        <tr>
+          <td><i class="ph ph-dots-six-vertical" style="color:#ccc;"></i></td>
+          <td style="font-weight:600;">${f.label}</td>
+          <td><span style="font-family:monospace; background:#f4f4f4; padding:4px 8px; border-radius:4px; font-size:12px;">${f.name}</span></td>
+          <td>${f.type}</td>
+          <td>${f.required ? 'Ya' : 'Tidak'}</td>
+          <td>
+            <button class="btn btn-outline" style="padding:6px 10px; color:var(--danger-text);" onclick="deleteField('${f.fieldId}')"><i class="ph ph-trash"></i></button>
+          </td>
+        </tr>
+      `).join('');
+
+      if(state.currentFields.length === 0) trs = `<tr><td colspan="6" style="text-align:center; padding:32px; color:var(--text-soft);">Belum ada field.</td></tr>`;
+
+      container.innerHTML = `
+        <div style="display:flex; gap:16px; margin-bottom:24px; align-items:center;">
+          <a href="#/forms" class="btn btn-outline" style="padding:10px;"><i class="ph ph-arrow-left"></i></a>
+          <h1 class="page-title" style="margin:0;">Builder: ${form.formName}</h1>
+        </div>
+
+        <div style="display:flex; gap:24px;">
+          <!-- Field List -->
+          <div class="card" style="flex:2;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+              <h2 class="section-title" style="margin:0;">Form Fields</h2>
+              <button class="btn btn-primary" onclick="openFieldModal()"><i class="ph ph-plus"></i> Tambah Field</button>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead><tr><th></th><th>Label</th><th>Name Attr</th><th>Type</th><th>Wajib</th><th>Aksi</th></tr></thead>
+                <tbody>${trs}</tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Form Settings Preview -->
+          <div class="card" style="flex:1; height:fit-content;">
+            <h2 class="section-title">Pengaturan Form</h2>
+            <div style="margin-bottom:12px;"><small><strong>Slug:</strong></small><br>/${form.slug}</div>
+            <div style="margin-bottom:12px;"><small><strong>Tipe:</strong></small><br>${form.type}</div>
+            ${form.type === 'whatsapp_order' ? `<div style="margin-bottom:12px;"><small><strong>WA Number:</strong></small><br>${form.whatsappNumber}</div>` : ''}
+            <button class="btn btn-outline" style="width:100%; margin-top:16px;" onclick="openEmbedModal('${form.slug}')">Generate Embed Code</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // 6. SUBMISSIONS & INVOICES
+    async function renderSubmissions(container) {
+      container.innerHTML = `<h1 class="page-title">Submissions</h1><div class="loader"></div>`;
+      const res = await apiCall({ action: 'getSubmissions' });
+      const data = res.data || [];
+      
+      let trs = data.map(d => {
+        let parsed = {};
+        try { parsed = JSON.parse(d.data); } catch(e){}
+        // Ambil 2 key pertama untuk preview
+        let preview = Object.keys(parsed).slice(0,2).map(k => `${k}: ${parsed[k]}`).join(', ');
+        
+        return `
+        <tr>
+          <td style="font-family:monospace; font-size:12px;">${d.submissionId}</td>
+          <td>${d.slug}</td>
+          <td style="font-size:13px; color:var(--text-soft); max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${preview}...</td>
+          <td>${new Date(d.createdAt).toLocaleDateString('id-ID')}</td>
+        </tr>
+      `}).join('');
+      
+      container.innerHTML = `
+        <h1 class="page-title">Submissions</h1>
+        <div class="card table-container">
+          <table>
+            <thead><tr><th>ID</th><th>Form Slug</th><th>Data Preview</th><th>Tanggal</th></tr></thead>
+            <tbody>${trs || '<tr><td colspan="4" style="text-align:center;">Kosong</td></tr>'}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    async function renderInvoices(container) {
+      container.innerHTML = `<h1 class="page-title">Invoices</h1><div class="loader"></div>`;
+      const res = await apiCall({ action: 'getInvoices' });
+      const data = res.data || [];
+      
+      let trs = data.map(d => `
+        <tr>
+          <td style="font-weight:600;">${d.invoiceId}</td>
+          <td style="font-family:monospace; font-size:12px;">${d.submissionId}</td>
+          <td><span class="badge" style="background:${d.status==='PAID'?'var(--success-bg)':'var(--danger-bg)'}; color:${d.status==='PAID'?'var(--success-text)':'var(--danger-text)'}">${d.status}</span></td>
+          <td>
+            <a href="#/invoice/${d.invoiceId}" target="_blank" class="btn btn-outline" style="padding:4px 8px; font-size:12px;">Lihat Public</a>
+          </td>
+        </tr>
+      `).join('');
+      
+      container.innerHTML = `
+        <h1 class="page-title">Invoices</h1>
+        <div class="card table-container">
+          <table>
+            <thead><tr><th>Invoice ID</th><th>Submission Ref</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody>${trs || '<tr><td colspan="4" style="text-align:center;">Kosong</td></tr>'}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+
+    // ================= MODALS & ACTIONS =================
+
+    let modalNode = null;
+    function showModal(content) {
+      if(!modalNode) {
+        modalNode = document.createElement('div');
+        modalNode.className = 'modal-overlay';
+        document.body.appendChild(modalNode);
+      }
+      modalNode.innerHTML = `
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="section-title" style="margin:0;">Form</h2>
+            <div class="modal-close" onclick="closeModal()"><i class="ph ph-x"></i></div>
+          </div>
+          <div id="modal-body">${content}</div>
+        </div>
+      `;
+      setTimeout(() => modalNode.classList.add('active'), 10);
+    }
+    function closeModal() {
+      if(modalNode) {
+        modalNode.classList.remove('active');
+        setTimeout(() => modalNode.remove(), 300);
+        modalNode = null;
+      }
+    }
+
+    function openFormModal() {
+      showModal(`
+        <form id="frmCreateForm">
+          <div class="input-group">
+            <label>Nama Form</label>
+            <input type="text" id="fName" class="input-control" required>
+          </div>
+          <div class="input-group">
+            <label>Slug URL (tanpa spasi)</label>
+            <input type="text" id="fSlug" class="input-control" required pattern="[a-zA-Z0-9-]+" placeholder="contoh-form">
+          </div>
+          <div class="input-group">
+            <label>Tipe Form</label>
+            <select id="fType" class="input-control" onchange="document.getElementById('waWrap').style.display = this.value === 'whatsapp_order' ? 'block' : 'none'">
+              <option value="standard">Standard (Simpan Data)</option>
+              <option value="whatsapp_order">WhatsApp Order</option>
+              <option value="invoice">Generate Invoice</option>
+            </select>
+          </div>
+          <div class="input-group" id="waWrap" style="display:none;">
+            <label>Nomor WhatsApp Tujuan (Gunakan kode negara, misal: 62812...)</label>
+            <input type="text" id="fWa" class="input-control">
+          </div>
+          <div class="input-group">
+            <label>Deskripsi (Opsional)</label>
+            <textarea id="fDesc" class="input-control" rows="3"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Simpan Form</button>
+        </form>
+      `);
+
+      document.getElementById('frmCreateForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const data = {
+          formName: document.getElementById('fName').value,
+          slug: document.getElementById('fSlug').value.toLowerCase(),
+          type: document.getElementById('fType').value,
+          whatsappNumber: document.getElementById('fWa').value,
+          description: document.getElementById('fDesc').value
+        };
+        const res = await apiCall({ action: 'saveForm', data });
+        if(res.success) {
+          closeModal();
+          window.location.hash = '#/builder/' + res.data.formId;
+        } else {
+          alert(res.message);
+        }
+      };
+    }
+
+    function openFieldModal() {
+      showModal(`
+        <form id="frmCreateField">
+          <div class="input-group">
+            <label>Label Field</label>
+            <input type="text" id="flLabel" class="input-control" required placeholder="Misal: Nama Lengkap" onkeyup="document.getElementById('flName').value = this.value.toLowerCase().replace(/[^a-z0-9]/g, '_')">
+          </div>
+          <div class="input-group">
+            <label>Name Attribute (Kode unik kolom)</label>
+            <input type="text" id="flName" class="input-control" required>
+          </div>
+          <div class="input-group">
+            <label>Tipe Input</label>
+            <select id="flType" class="input-control" onchange="document.getElementById('optWrap').style.display = this.value === 'select' ? 'block' : 'none'">
+              <option value="text">Text Pendek</option>
+              <option value="email">Email</option>
+              <option value="number">Angka</option>
+              <option value="textarea">Text Panjang (Textarea)</option>
+              <option value="select">Dropdown (Select)</option>
+            </select>
+          </div>
+          <div class="input-group" id="optWrap" style="display:none;">
+            <label>Pilihan (Pisahkan dengan koma)</label>
+            <input type="text" id="flOpt" class="input-control" placeholder="Merah, Biru, Hijau">
+          </div>
+          <div class="input-group">
+            <label>Help Text (Opsional)</label>
+            <input type="text" id="flHelp" class="input-control" placeholder="Penjelasan kecil di bawah input">
+          </div>
+          <div class="input-group">
+            <label><input type="checkbox" id="flReq" checked> Wajib Diisi (Required)</label>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Tambah Field</button>
+        </form>
+      `);
+
+      document.getElementById('frmCreateField').onsubmit = async (e) => {
+        e.preventDefault();
+        const data = {
+          formId: state.currentForm.formId,
+          label: document.getElementById('flLabel').value,
+          name: document.getElementById('flName').value,
+          type: document.getElementById('flType').value,
+          options: document.getElementById('flOpt').value,
+          helpText: document.getElementById('flHelp').value,
+          required: document.getElementById('flReq').checked,
+          orderIndex: state.currentFields.length + 1
+        };
+        const res = await apiCall({ action: 'saveField', data });
+        if(res.success) {
+          closeModal();
+          router(); // refresh builder
+        }
+      };
+    }
+
+    // ================= EMBED GENERATOR =================
+    function openEmbedModal(slug) {
+      const publicLink = getBaseUrl() + '#/form/' + slug;
+      const iframeCode = `<iframe src="${publicLink}" width="100%" height="800" frameborder="0" style="border:none;border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(31,42,46,.08);"></iframe>`;
+      
+      const htmlCode = `
+<div class="imersform-embed" data-form-slug="${slug}" data-api-url="${state.apiUrl}"></div>
+
+<script>
+(function(){
+  const containers = document.querySelectorAll('.imersform-embed');
+  containers.forEach(async function(container){
+    const slug = container.getAttribute('data-form-slug');
+    const apiUrl = container.getAttribute('data-api-url');
+    container.innerHTML = '<div style="padding:24px;text-align:center;font-family:Arial;">Memuat form...</div>';
+
+    try {
+      const response = await fetch(apiUrl + '?action=getFormBySlug&slug=' + encodeURIComponent(slug));
+      const result = await response.json();
+
+      if (!result.success) {
+        container.innerHTML = '<div style="padding:20px;color:#b00020;">Form tidak ditemukan.</div>';
+        return;
+      }
+
+      const form = result.data.form;
+      const fields = result.data.fields;
+
+      let html = \`
+        <style>
+          .imersform-widget { font-family: Inter, Arial, sans-serif; background: linear-gradient(135deg, #F7FBF8, #F8FAF7); border: 1px solid #E6EFEC; border-radius: 24px; padding: 32px; max-width: 600px; margin: 0 auto; box-shadow: 0 20px 60px rgba(31,42,46,.08); color: #1F2A2E; }
+          .imersform-widget * { box-sizing: border-box; }
+          .imersform-title { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+          .imersform-desc { color: #6B7A7D; margin-bottom: 24px; line-height: 1.6; }
+          .imersform-group { margin-bottom: 20px; text-align: left; }
+          .imersform-label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 14px;}
+          .imersform-input, .imersform-select, .imersform-textarea { width: 100%; border: 1px solid #E6EFEC; border-radius: 16px; padding: 14px 16px; font-size: 15px; outline: none; background: #ffffff; color: #1F2A2E; transition: .2s ease; }
+          .imersform-input:focus, .imersform-select:focus, .imersform-textarea:focus { border-color: #9FE7D7; box-shadow: 0 0 0 4px rgba(159,231,215,.28); }
+          .imersform-textarea { min-height: 120px; resize: vertical; }
+          .imersform-help { font-size: 13px; color: #6B7A7D; margin-top: 6px; }
+          .imersform-btn { width: 100%; border: none; border-radius: 16px; padding: 16px 20px; background: linear-gradient(135deg, #9FE7D7, #BFD8B8); color: #1F2A2E; font-weight: 800; font-size: 16px; cursor: pointer; transition: .2s ease; margin-top: 10px; }
+          .imersform-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(31,42,46,.12); }
+          .imersform-alert { padding: 16px; border-radius: 16px; font-weight: 600; margin-top: 16px; }
+          .imers-success { background: #E9FFF6; color: #22664D; }
+          .imers-error { background: #FFF0EE; color: #B24035; }
+        </style>
+        <form class="imersform-widget" data-slug="\${slug}">
+          <div class="imersform-title">\${form.formName}</div>
+          <div class="imersform-desc">\${form.description || ''}</div>
+      \`;
+
+      fields.forEach(function(field){
+        html += \`<div class="imersform-group"><label class="imersform-label">\${field.label}\${field.required ? ' *' : ''}</label>\`;
+        if (field.type === 'textarea') {
+          html += \`<textarea class="imersform-textarea" name="\${field.name}" \${field.required ? 'required' : ''}></textarea>\`;
+        } else if (field.type === 'select') {
+          html += \`<select class="imersform-select" name="\${field.name}" \${field.required ? 'required' : ''}><option value="">Pilih...</option>\`;
+          const opts = field.options ? field.options.split(',') : [];
+          opts.forEach(o => html += \`<option value="\${o.trim()}">\${o.trim()}</option>\`);
+          html += \`</select>\`;
+        } else {
+          html += \`<input class="imersform-input" type="\${field.type || 'text'}" name="\${field.name}" \${field.required ? 'required' : ''}>\`;
+        }
+        if (field.helpText) html += \`<div class="imersform-help">\${field.helpText}</div>\`;
+        html += \`</div>\`;
+      });
+
+      html += \`<button class="imersform-btn" type="submit">Kirim Data</button><div class="imersform-message"></div></form>\`;
+      container.innerHTML = html;
+
+      const formEl = container.querySelector('form');
+      const msgBox = container.querySelector('.imersform-message');
+
+      formEl.addEventListener('submit', async function(e){
+        e.preventDefault();
+        const fd = new FormData(formEl);
+        const data = {};
+        fd.forEach((v, k) => data[k] = v);
+        
+        msgBox.innerHTML = '<div class="imersform-alert" style="background:#f4f4f4;">Memproses...</div>';
+        
+        try {
+          const res = await fetch(apiUrl, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'submitForm', slug: slug, data: data })
+          });
+          const result = await res.json();
+          if (!result.success) {
+            msgBox.innerHTML = '<div class="imersform-alert imers-error">' + result.message + '</div>';
+            return;
+          }
+          msgBox.innerHTML = '<div class="imersform-alert imers-success">' + result.message + '</div>';
+          
+          if (result.data && result.data.whatsappUrl) {
+            setTimeout(() => window.open(result.data.whatsappUrl, '_blank'), 1000);
+          } else if (result.data && result.data.invoiceId) {
+             // Redirect ke invoice
+             setTimeout(() => window.location.href = window.location.origin + window.location.pathname + '#/invoice/' + result.data.invoiceId, 1000);
+          }
+          formEl.reset();
+        } catch (err) {
+          msgBox.innerHTML = '<div class="imersform-alert imers-error">Gagal memproses data.</div>';
+        }
+      });
+    } catch (err) {
+      container.innerHTML = '<div style="padding:20px;color:#b00020;">Gagal memuat form.</div>';
+    }
+  });
+})();
+<\/script>`;
+
+      showModal(`
+        <h2 class="section-title">Share & Embed Form</h2>
+        
+        <div style="margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+            <strong>1. Public Link</strong>
+            <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="copyTxt('linkCode')">Copy</button>
+          </div>
+          <div class="code-block" id="linkCode">${publicLink}</div>
+          <div style="font-size:12px; color:var(--text-soft);"><a href="${publicLink}" target="_blank" style="color:var(--primary-dark); text-decoration:underline;">Buka di tab baru</a></div>
+        </div>
+
+        <div style="margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+            <strong>2. Iframe Embed</strong>
+            <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="copyTxt('ifrmCode')">Copy</button>
+          </div>
+          <div class="code-block" id="ifrmCode">${iframeCode.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+          <div style="font-size:12px; color:var(--text-soft);">Tempelkan di builder web (Elementor, Wix, WordPress) yang support modul HTML/Iframe.</div>
+        </div>
+
+        <div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+            <strong>3. HTML Script Embed (Native)</strong>
+            <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="copyTxt('htmlCode')">Copy</button>
+          </div>
+          <div class="code-block" id="htmlCode">${htmlCode.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+          <div style="font-size:12px; color:var(--text-soft);">Gunakan ini jika ingin form merender secara native (bukan Iframe) di website Anda. CSS sudah diisolasi.</div>
+        </div>
+      `);
+    }
+
+    function copyTxt(id) {
+      const text = document.getElementById(id).innerText;
+      // Gunakan execCommand sebagai fallback aman untuk environment iFrame
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      alert('Tersalin ke clipboard!');
+    }
+
+    // ================= PUBLIC PAGES (RENDERER) =================
+
+    // 7. PUBLIC FORM RENDERER
+    async function renderPublicForm(slug) {
+      appDiv.innerHTML = `<div class="public-layout"><div class="loader"></div></div>`;
+      
+      try {
+        // Fetch via GET gas API (Membutuhkan URL API di lokal storage, untuk demo ini kita fallback jika user mengakses langsung tanpa masuk admin)
+        const apiUrl = state.apiUrl || localStorage.getItem('imers_apiUrl');
+        if(!apiUrl) return appDiv.innerHTML = `<div class="public-layout"><div class="card">Sistem belum dikonfigurasi (API URL hilang).</div></div>`;
+
+        const res = await fetch(apiUrl + '?action=getFormBySlug&slug=' + encodeURIComponent(slug));
+        const result = await res.json();
+
+        if(!result.success) return appDiv.innerHTML = `<div class="public-layout"><div class="card">${result.message}</div></div>`;
+
+        const form = result.data.form;
+        const fields = result.data.fields;
+
+        let fieldsHtml = '';
+        fields.forEach(f => {
+          fieldsHtml += `<div class="input-group"><label>${f.label}${f.required?' <span style="color:var(--danger-text)">*</span>':''}</label>`;
+          
+          if(f.type === 'textarea') {
+            fieldsHtml += `<textarea class="input-control" name="${f.name}" rows="4" ${f.required?'required':''}></textarea>`;
+          } else if(f.type === 'select') {
+            fieldsHtml += `<select class="input-control" name="${f.name}" ${f.required?'required':''}><option value="">Pilih...</option>`;
+            if(f.options) {
+               f.options.split(',').forEach(opt => fieldsHtml += `<option value="${opt.trim()}">${opt.trim()}</option>`);
+            }
+            fieldsHtml += `</select>`;
+          } else {
+            fieldsHtml += `<input class="input-control" type="${f.type}" name="${f.name}" ${f.required?'required':''}>`;
+          }
+          
+          if(f.helpText) fieldsHtml += `<div style="font-size:12px; color:var(--text-soft); margin-top:6px;">${f.helpText}</div>`;
+          fieldsHtml += `</div>`;
+        });
+
+        appDiv.innerHTML = `
+          <div class="public-layout">
+            <div class="card" style="width:100%; max-width:600px; padding:40px;">
+              <h1 style="font-size:32px; font-weight:800; margin-bottom:8px;">${form.formName}</h1>
+              <p style="color:var(--text-soft); margin-bottom:32px; font-size:15px; line-height:1.6;">${form.description || ''}</p>
+              
+              <form id="pubForm">
+                ${fieldsHtml}
+                <button type="submit" class="btn btn-primary" style="width:100%; padding:16px; font-size:16px; border-radius:16px; margin-top:16px;" id="btnPubSubmit">Kirim Data</button>
+                <div id="pubMsg" style="margin-top:16px;"></div>
+              </form>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('pubForm').onsubmit = async (e) => {
+          e.preventDefault();
+          const btn = document.getElementById('btnPubSubmit');
+          const msg = document.getElementById('pubMsg');
+          
+          btn.innerHTML = 'Memproses...';
+          btn.disabled = true;
+          
+          const fd = new FormData(e.target);
+          const data = {};
+          fd.forEach((v,k) => data[k] = v);
+
+          const postRes = await fetch(apiUrl, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'submitForm', slug: slug, data: data })
+          });
+          const submitResult = await postRes.json();
+
+          btn.innerHTML = 'Kirim Data';
+          btn.disabled = false;
+
+          if(!submitResult.success) {
+            msg.innerHTML = `<div style="padding:16px; background:var(--danger-bg); color:var(--danger-text); border-radius:12px;">${submitResult.message}</div>`;
+            return;
+          }
+
+          msg.innerHTML = `<div style="padding:16px; background:var(--success-bg); color:var(--success-text); border-radius:12px;">${submitResult.message}</div>`;
+          e.target.reset();
+
+          if(submitResult.data && submitResult.data.whatsappUrl) {
+            setTimeout(() => window.location.href = submitResult.data.whatsappUrl, 1000);
+          } else if(submitResult.data && submitResult.data.invoiceId) {
+             setTimeout(() => window.location.hash = '#/invoice/' + submitResult.data.invoiceId, 1000);
+          }
+        };
+
+      } catch(err) {
+        appDiv.innerHTML = `<div class="public-layout"><div class="card">Terjadi kesalahan koneksi.</div></div>`;
+      }
+    }
+
+    // 8. PUBLIC INVOICE RENDERER
+    async function renderPublicInvoice(id) {
+      appDiv.innerHTML = `<div class="public-layout"><div class="loader"></div></div>`;
+      const apiUrl = state.apiUrl || localStorage.getItem('imers_apiUrl');
+      
+      try {
+        const res = await fetch(apiUrl + '?action=getInvoiceById&id=' + id);
+        const result = await res.json();
+        
+        if(!result.success) return appDiv.innerHTML = `<div class="public-layout"><div class="card">${result.message}</div></div>`;
+        const inv = result.data;
+        
+        let detailsHtml = '';
+        if(inv.details) {
+          for(let key in inv.details) {
+            detailsHtml += `<div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border-soft);"><span style="color:var(--text-soft);">${key}</span><span style="font-weight:600;">${inv.details[key]}</span></div>`;
+          }
+        }
+
+        appDiv.innerHTML = `
+          <div class="public-layout">
+            <div class="card" style="width:100%; max-width:500px; padding:40px;">
+              <div style="text-align:center; margin-bottom:32px;">
+                <div style="display:inline-block; padding:16px; background:${inv.status==='PAID'?'var(--success-bg)':'var(--danger-bg)'}; color:${inv.status==='PAID'?'var(--success-text)':'var(--danger-text)'}; border-radius:50%; margin-bottom:16px;">
+                  <i class="ph ph-${inv.status==='PAID'?'check':'receipt'}" style="font-size:40px;"></i>
+                </div>
+                <h1 style="font-size:28px; font-weight:800; margin-bottom:8px;">INVOICE</h1>
+                <div style="font-family:monospace; color:var(--text-soft);">${inv.invoiceId}</div>
+              </div>
+              
+              <div style="background:var(--bg-main); padding:24px; border-radius:16px; margin-bottom:24px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="color:var(--text-soft);">Status</span>
+                  <span class="badge" style="background:${inv.status==='PAID'?'var(--success-bg)':'var(--danger-bg)'}; color:${inv.status==='PAID'?'var(--success-text)':'var(--danger-text)'}">${inv.status}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span style="color:var(--text-soft);">Tanggal</span>
+                  <span style="font-weight:600;">${new Date(inv.createdAt).toLocaleDateString('id-ID')}</span>
+                </div>
+              </div>
+
+              <h3 style="font-size:16px; font-weight:700; margin-bottom:16px;">Detail Pemesanan</h3>
+              <div style="margin-bottom:32px; font-size:14px;">
+                ${detailsHtml}
+              </div>
+
+              <button class="btn btn-outline" style="width:100%; padding:16px;" onclick="window.print()"><i class="ph ph-printer"></i> Cetak Invoice</button>
+            </div>
+          </div>
+        `;
+      } catch(err) {
+        appDiv.innerHTML = `<div class="public-layout"><div class="card">Terjadi kesalahan koneksi ke server.</div></div>`;
+      }
+    }
+
+  </script>
+</body>
+</html>
