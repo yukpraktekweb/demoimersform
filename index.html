@@ -287,6 +287,7 @@
       .sidebar { transform: translateX(-100%); }
       .main-content { margin-left: 0; padding: 24px; }
       .app-container.menu-open .sidebar { transform: translateX(0); box-shadow: var(--shadow-lg); }
+      .builder-layout { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -320,7 +321,7 @@
       try {
         const response = await fetch(state.apiUrl, {
           method: 'POST',
-          body: JSON.stringify(payload) // Plain text to bypass CORS OPTIONS preflight issue in GAS
+          body: JSON.stringify(payload)
         });
         return await response.json();
       } catch (err) {
@@ -334,7 +335,7 @@
 
     function router() {
       let hash = window.location.hash || '#/dashboard';
-      appDiv.innerHTML = ''; // Clear
+      appDiv.innerHTML = '';
 
       if (hash.startsWith('#/form/')) {
         renderPublicForm(hash.replace('#/form/', ''));
@@ -350,8 +351,9 @@
         return;
       }
 
-      if (hash === '#/login') renderLogin();
-      else {
+      if (hash === '#/login') {
+        renderLogin();
+      } else {
         // Admin Wrapper
         appDiv.innerHTML = `
           <div class="app-container">
@@ -375,22 +377,19 @@
         const main = document.getElementById('main-content');
         
         if (hash === '#/dashboard') renderDashboard(main);
-      else if (hash === '#/settings') renderSettings(main);
-      else if (hash === '#/forms') renderForms(main);
-      else if (hash.startsWith('#/builder/')) renderBuilder(main, hash.replace('#/builder/', ''));
-      else if (hash === '#/submissions') renderSubmissions(main);
-      else if (hash === '#/invoices') renderInvoices(main);
+        else if (hash === '#/settings') renderSettings(main);
+        else if (hash === '#/forms') renderForms(main);
+        else if (hash.startsWith('#/builder/')) renderBuilder(main, hash.replace('#/builder/', ''));
+        else if (hash === '#/submissions') renderSubmissions(main);
+        else if (hash === '#/invoices') renderInvoices(main);
+      }
     }
-  }
 
-  window.addEventListener('hashchange', router);
-  
-  // Panggil router pertama kali saat halaman dimuat agar tidak blank
-  router();
+    window.addEventListener('hashchange', router);
+    
+    // Panggil router pertama kali saat halaman dimuat
+    router();
 
-  // ================= VIEWS =================
-
-  // 1. LOGIN
     // ================= VIEWS =================
 
     // 1. LOGIN
@@ -405,7 +404,7 @@
             
             <form id="loginForm">
               <div class="input-group" style="text-align:left;">
-                <label>Email</label>
+                <label>Email Admin</label>
                 <input type="email" id="inpEmail" class="input-control" required placeholder="admin@imersform.com">
               </div>
               <div class="input-group" style="text-align:left;">
@@ -489,6 +488,7 @@
         </div>
       `;
     }
+    
     function saveSettings() {
       const url = document.getElementById('setApi').value;
       localStorage.setItem('imers_apiUrl', url);
@@ -535,130 +535,7 @@
       `;
     }
 
-    // 5. FORM BUILDER (Fields)
-    async function renderBuilder(container, formId) {
-      if(!state.forms.length) {
-        const resForm = await apiCall({ action: 'getForms' });
-        state.forms = resForm.data;
-      }
-      const form = state.forms.find(f => f.formId === formId);
-      if(!form) return window.location.hash = '#/forms';
-
-      state.currentForm = form;
-      
-      const resFields = await apiCall({ action: 'getFields', formId: formId });
-      state.currentFields = resFields.data || [];
-
-      let trs = state.currentFields.map(f => `
-        <tr>
-          <td><i class="ph ph-dots-six-vertical" style="color:#ccc;"></i></td>
-          <td style="font-weight:600;">${f.label}</td>
-          <td><span style="font-family:monospace; background:#f4f4f4; padding:4px 8px; border-radius:4px; font-size:12px;">${f.name}</span></td>
-          <td>${f.type}</td>
-          <td>${f.required ? 'Ya' : 'Tidak'}</td>
-          <td>
-            <button class="btn btn-outline" style="padding:6px 10px; color:var(--danger-text);" onclick="deleteField('${f.fieldId}')"><i class="ph ph-trash"></i></button>
-          </td>
-        </tr>
-      `).join('');
-
-      if(state.currentFields.length === 0) trs = `<tr><td colspan="6" style="text-align:center; padding:32px; color:var(--text-soft);">Belum ada field.</td></tr>`;
-
-      container.innerHTML = `
-        <div style="display:flex; gap:16px; margin-bottom:24px; align-items:center;">
-          <a href="#/forms" class="btn btn-outline" style="padding:10px;"><i class="ph ph-arrow-left"></i></a>
-          <h1 class="page-title" style="margin:0;">Builder: ${form.formName}</h1>
-        </div>
-
-        <div style="display:flex; gap:24px;">
-          <!-- Field List -->
-          <div class="card" style="flex:2;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-              <h2 class="section-title" style="margin:0;">Form Fields</h2>
-              <button class="btn btn-primary" onclick="openFieldModal()"><i class="ph ph-plus"></i> Tambah Field</button>
-            </div>
-            <div class="table-container">
-              <table>
-                <thead><tr><th></th><th>Label</th><th>Name Attr</th><th>Type</th><th>Wajib</th><th>Aksi</th></tr></thead>
-                <tbody>${trs}</tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Form Settings Preview -->
-          <div class="card" style="flex:1; height:fit-content;">
-            <h2 class="section-title">Pengaturan Form</h2>
-            <div style="margin-bottom:12px;"><small><strong>Slug:</strong></small><br>/${form.slug}</div>
-            <div style="margin-bottom:12px;"><small><strong>Tipe:</strong></small><br>${form.type}</div>
-            ${form.type === 'whatsapp_order' ? `<div style="margin-bottom:12px;"><small><strong>WA Number:</strong></small><br>${form.whatsappNumber}</div>` : ''}
-            <button class="btn btn-outline" style="width:100%; margin-top:16px;" onclick="openEmbedModal('${form.slug}')">Generate Embed Code</button>
-          </div>
-        </div>
-      `;
-    }
-
-    // 6. SUBMISSIONS & INVOICES
-    async function renderSubmissions(container) {
-      container.innerHTML = `<h1 class="page-title">Submissions</h1><div class="loader"></div>`;
-      const res = await apiCall({ action: 'getSubmissions' });
-      const data = res.data || [];
-      
-      let trs = data.map(d => {
-        let parsed = {};
-        try { parsed = JSON.parse(d.data); } catch(e){}
-        // Ambil 2 key pertama untuk preview
-        let preview = Object.keys(parsed).slice(0,2).map(k => `${k}: ${parsed[k]}`).join(', ');
-        
-        return `
-        <tr>
-          <td style="font-family:monospace; font-size:12px;">${d.submissionId}</td>
-          <td>${d.slug}</td>
-          <td style="font-size:13px; color:var(--text-soft); max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${preview}...</td>
-          <td>${new Date(d.createdAt).toLocaleDateString('id-ID')}</td>
-        </tr>
-      `}).join('');
-      
-      container.innerHTML = `
-        <h1 class="page-title">Submissions</h1>
-        <div class="card table-container">
-          <table>
-            <thead><tr><th>ID</th><th>Form Slug</th><th>Data Preview</th><th>Tanggal</th></tr></thead>
-            <tbody>${trs || '<tr><td colspan="4" style="text-align:center;">Kosong</td></tr>'}</tbody>
-          </table>
-        </div>
-      `;
-    }
-
-    async function renderInvoices(container) {
-      container.innerHTML = `<h1 class="page-title">Invoices</h1><div class="loader"></div>`;
-      const res = await apiCall({ action: 'getInvoices' });
-      const data = res.data || [];
-      
-      let trs = data.map(d => `
-        <tr>
-          <td style="font-weight:600;">${d.invoiceId}</td>
-          <td style="font-family:monospace; font-size:12px;">${d.submissionId}</td>
-          <td><span class="badge" style="background:${d.status==='PAID'?'var(--success-bg)':'var(--danger-bg)'}; color:${d.status==='PAID'?'var(--success-text)':'var(--danger-text)'}">${d.status}</span></td>
-          <td>
-            <a href="#/invoice/${d.invoiceId}" target="_blank" class="btn btn-outline" style="padding:4px 8px; font-size:12px;">Lihat Public</a>
-          </td>
-        </tr>
-      `).join('');
-      
-      container.innerHTML = `
-        <h1 class="page-title">Invoices</h1>
-        <div class="card table-container">
-          <table>
-            <thead><tr><th>Invoice ID</th><th>Submission Ref</th><th>Status</th><th>Aksi</th></tr></thead>
-            <tbody>${trs || '<tr><td colspan="4" style="text-align:center;">Kosong</td></tr>'}</tbody>
-          </table>
-        </div>
-      `;
-    }
-
-
-    // ================= MODALS & ACTIONS =================
-
+    // ================= MODALS & TEMPLATE LOGIC =================
     let modalNode = null;
     function showModal(content) {
       if(!modalNode) {
@@ -677,6 +554,7 @@
       `;
       setTimeout(() => modalNode.classList.add('active'), 10);
     }
+    
     function closeModal() {
       if(modalNode) {
         modalNode.classList.remove('active');
@@ -686,7 +564,6 @@
     }
 
     function openFormModal() {
-      // 5 Template Keren Standar Fluent Forms
       const tpls = [
         { id: 'blank', icon: 'ph-file-dashed', name: 'Form Kosong', desc: 'Mulai desain dari nol' },
         { id: 'order_fisik', icon: 'ph-package', name: 'Order Barang Fisik', desc: 'Nama, Alamat, WA, Kurir' },
@@ -742,7 +619,6 @@
       document.getElementById('frmCreateForm').onsubmit = async (e) => {
         e.preventDefault();
         
-        // Blueprint untuk setiap template
         const blueprints = {
           'blank': [],
           'order_fisik': [
@@ -786,7 +662,7 @@
           form: {
             formName: document.getElementById('fName').value,
             slug: document.getElementById('fSlug').value.toLowerCase(),
-            type: 'whatsapp_order', // Secara default jadikan WA agar redirect keren
+            type: 'whatsapp_order', 
             whatsappNumber: document.getElementById('fWa').value
           },
           fields: fields
@@ -797,6 +673,14 @@
         
         const res = await apiCall({ action: 'createFromTemplate', data });
         if(res.success) {
+          state.forms.unshift({
+            formId: res.data.formId,
+            formName: data.form.formName,
+            slug: data.form.slug,
+            type: data.form.type,
+            whatsappNumber: data.form.whatsappNumber
+          });
+
           closeModal();
           window.location.hash = '#/builder/' + res.data.formId;
         } else {
@@ -807,7 +691,7 @@
       };
     }
 
-    // Builder Visual Baru (Pengganti renderBuilder Lama & openFieldModal)
+    // 5. BUILDER VISUAL BARU
     async function renderBuilder(container, formId) {
       if(!state.forms.length) {
         const resForm = await apiCall({ action: 'getForms' });
@@ -823,7 +707,6 @@
       state.selectedFieldIndex = null;
 
       window.refreshBuilderCanvas = function() {
-        // Render Canvas (Tengah)
         let canvasHtml = '';
         if(state.currentFields.length === 0) {
           canvasHtml = `<div style="text-align:center; padding:60px 20px; color:var(--text-soft); border:2px dashed var(--border-soft); border-radius:var(--radius-md);">Belum ada field di form ini. <br>Klik menu di panel sebelah kiri untuk mulai.</div>`;
@@ -845,7 +728,6 @@
           });
         }
 
-        // Render Panel Properti (Kanan)
         let propsHtml = `
           <div style="text-align:center; color:var(--text-soft); padding:40px 0;">
             <i class="ph ph-cursor-click" style="font-size:40px; color:var(--border-soft); margin-bottom:16px;"></i>
@@ -901,7 +783,6 @@
         document.getElementById('b-props').innerHTML = propsHtml;
       };
 
-      // Aksi Penambahan dari Kiri
       window.addField = function(type, label) {
         state.currentFields.push({
           formId: formId,
@@ -930,7 +811,6 @@
             if(optDiv) optDiv.style.display = value === 'select' ? 'block' : 'none';
           }
           
-          // Re-render hanya canvas untuk mencegah input di property panel kehilangan fokus
           let canvasHtml = '';
           state.currentFields.forEach((f, idx) => {
             const isActive = state.selectedFieldIndex === idx ? 'active' : '';
@@ -981,7 +861,6 @@
         else alert(res.message);
       };
 
-      // Tampilan Utama Builder
       container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:32px;">
           <div style="display:flex; gap:16px; align-items:center;">
@@ -998,7 +877,6 @@
         </div>
 
         <div class="builder-layout">
-          <!-- Kiri: Elemen Input -->
           <div class="builder-palette">
             <h3 style="font-size:12px; margin-bottom:16px; color:var(--text-soft); text-transform:uppercase; letter-spacing:1px; font-weight:800;">Komponen Tersedia</h3>
             <button class="palette-btn" onclick="addField('text', 'Teks Pendek')"><i class="ph ph-text-t"></i> Teks Pendek</button>
@@ -1008,16 +886,70 @@
             <button class="palette-btn" onclick="addField('select', 'Pilihan Ganda')"><i class="ph ph-list-dashes"></i> Dropdown Select</button>
             <button class="palette-btn" onclick="addField('date', 'Pilih Tanggal')"><i class="ph ph-calendar"></i> Kalender/Tanggal</button>
           </div>
-
-          <!-- Tengah: Canvas (Visual) -->
           <div class="builder-canvas" id="b-canvas"></div>
-
-          <!-- Kanan: Properti (Pengaturan) -->
           <div class="builder-props" id="b-props"></div>
         </div>
       `;
 
       refreshBuilderCanvas();
+    }
+
+    // 6. SUBMISSIONS & INVOICES
+    async function renderSubmissions(container) {
+      container.innerHTML = `<h1 class="page-title">Submissions</h1><div class="loader"></div>`;
+      const res = await apiCall({ action: 'getSubmissions' });
+      const data = res.data || [];
+      
+      let trs = data.map(d => {
+        let parsed = {};
+        try { parsed = JSON.parse(d.data); } catch(e){}
+        let preview = Object.keys(parsed).slice(0,2).map(k => `${k}: ${parsed[k]}`).join(', ');
+        
+        return `
+        <tr>
+          <td style="font-family:monospace; font-size:12px;">${d.submissionId}</td>
+          <td>${d.slug}</td>
+          <td style="font-size:13px; color:var(--text-soft); max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${preview}...</td>
+          <td>${new Date(d.createdAt).toLocaleDateString('id-ID')}</td>
+        </tr>
+      `}).join('');
+      
+      container.innerHTML = `
+        <h1 class="page-title">Submissions</h1>
+        <div class="card table-container">
+          <table>
+            <thead><tr><th>ID</th><th>Form Slug</th><th>Data Preview</th><th>Tanggal</th></tr></thead>
+            <tbody>${trs || '<tr><td colspan="4" style="text-align:center;">Kosong</td></tr>'}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    async function renderInvoices(container) {
+      container.innerHTML = `<h1 class="page-title">Invoices</h1><div class="loader"></div>`;
+      const res = await apiCall({ action: 'getInvoices' });
+      const data = res.data || [];
+      
+      let trs = data.map(d => `
+        <tr>
+          <td style="font-weight:600;">${d.invoiceId}</td>
+          <td style="font-family:monospace; font-size:12px;">${d.submissionId}</td>
+          <td><span class="badge" style="background:${d.status==='PAID'?'var(--success-bg)':'var(--danger-bg)'}; color:${d.status==='PAID'?'var(--success-text)':'var(--danger-text)'}">${d.status}</span></td>
+          <td>
+            <a href="#/invoice/${d.invoiceId}" target="_blank" class="btn btn-outline" style="padding:4px 8px; font-size:12px;">Lihat Public</a>
+          </td>
+        </tr>
+      `).join('');
+      
+      container.innerHTML = `
+        <h1 class="page-title">Invoices</h1>
+        <div class="card table-container">
+          <table>
+            <thead><tr><th>Invoice ID</th><th>Submission Ref</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody>${trs || '<tr><td colspan="4" style="text-align:center;">Kosong</td></tr>'}</tbody>
+          </table>
+        </div>
+      `;
     }
 
     // ================= EMBED GENERATOR =================
@@ -1116,7 +1048,6 @@
           if (result.data && result.data.whatsappUrl) {
             setTimeout(() => window.open(result.data.whatsappUrl, '_blank'), 1000);
           } else if (result.data && result.data.invoiceId) {
-             // Redirect ke invoice
              setTimeout(() => window.location.href = window.location.origin + window.location.pathname + '#/invoice/' + result.data.invoiceId, 1000);
           }
           formEl.reset();
@@ -1165,7 +1096,6 @@
 
     function copyTxt(id) {
       const text = document.getElementById(id).innerText;
-      // Gunakan execCommand sebagai fallback aman untuk environment iFrame
       const ta = document.createElement('textarea');
       ta.value = text;
       document.body.appendChild(ta);
@@ -1206,7 +1136,6 @@
             }
             fieldsHtml += `</select>`;
           } else {
-            // Support type date, number, email, text
             fieldsHtml += `<input class="modern-input" type="${f.type}" name="${f.name}" placeholder="${f.type === 'date' ? '' : 'Ketik di sini...'}" ${f.required?'required':''}>`;
           }
           
@@ -1249,7 +1178,7 @@
           });
           const submitResult = await postRes.json();
 
-          btn.innerHTML = 'Kirim Data';
+          btn.innerHTML = 'Kirim Pesanan Sekarang';
           btn.disabled = false;
 
           if(!submitResult.success) {
