@@ -416,7 +416,7 @@
             
             <form id="loginForm">
               <div class="input-group" style="text-align:left;">
-                <label>Email</label>
+                <label>Email Admin</label>
                 <input type="email" id="inpEmail" class="input-control" required placeholder="admin@imersform.com">
               </div>
               <div class="input-group" style="text-align:left;">
@@ -487,25 +487,87 @@
       alert(res.message);
     }
 
-    // 3. SETTINGS
-    function renderSettings(container) {
+    // 3. SETTINGS & WA GATEWAY
+    async function renderSettings(container) {
+      container.innerHTML = `<h1 class="page-title">Settings</h1><div class="loader"></div>`;
+      
+      let waData = { provider: 'none', apiKey: '', sender: '' };
+      try {
+        const res = await apiCall({ action: 'getWaSettings' });
+        if(res.success && res.data) waData = res.data;
+      } catch(e) {}
+
       container.innerHTML = `
         <h1 class="page-title">Settings</h1>
-        <div class="card" style="max-width:600px;">
+        
+        <div class="card" style="max-width:600px; margin-bottom:24px;">
+          <h2 class="section-title">Koneksi Apps Script</h2>
           <div class="input-group">
-            <label>API URL (Google Apps Script)</label>
+            <label>API URL Endpoint</label>
             <input type="text" id="setApi" class="input-control" value="${state.apiUrl}">
           </div>
-          <button class="btn btn-primary" onclick="saveSettings()">Simpan Pengaturan</button>
+          <button class="btn btn-primary" onclick="saveSettings()">Simpan API URL</button>
+        </div>
+
+        <div class="card" style="max-width:600px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 class="section-title" style="margin:0;">Integrasi WA Gateway</h2>
+            <span class="badge badge-wa">Notifikasi Otomatis</span>
+          </div>
+          <p style="color:var(--text-soft); font-size:14px; margin-bottom:24px;">Kirim pesan WhatsApp otomatis ke pelanggan atau admin saat form diisi.</p>
+          
+          <div class="input-group">
+            <label>Provider WA Gateway</label>
+            <select id="waProvider" class="input-control">
+              <option value="none" ${waData.provider==='none'?'selected':''}>Tidak Pakai</option>
+              <option value="fonnte" ${waData.provider==='fonnte'?'selected':''}>Fonnte</option>
+              <option value="waplus" ${waData.provider==='waplus'?'selected':''}>WAPlus</option>
+              <option value="xsender" ${waData.provider==='xsender'?'selected':''}>XSender</option>
+              <option value="starsender" ${waData.provider==='starsender'?'selected':''}>StarSender</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>API Key / Token</label>
+            <input type="text" id="waApiKey" class="input-control" value="${waData.apiKey}" placeholder="Masukkan API Key...">
+          </div>
+          <div class="input-group">
+            <label>Device / Sender Number</label>
+            <input type="text" id="waSender" class="input-control" value="${waData.sender}" placeholder="Wajib untuk WAPlus & XSender (Contoh: 628123...)">
+          </div>
+          <button class="btn btn-primary" id="btnSaveWa" onclick="saveWaSettings()" style="width:100%; padding:14px; margin-top:16px;">Simpan Konfigurasi WA</button>
         </div>
       `;
     }
     
-    function saveSettings() {
+    window.saveSettings = function() {
       const url = document.getElementById('setApi').value;
       localStorage.setItem('imers_apiUrl', url);
       state.apiUrl = url;
-      alert('Tersimpan');
+      alert('API URL Tersimpan ke memori browser.');
+    }
+
+    window.saveWaSettings = async function() {
+      const btn = document.getElementById('btnSaveWa');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menyimpan...';
+      btn.disabled = true;
+
+      const payload = {
+        provider: document.getElementById('waProvider').value,
+        apiKey: document.getElementById('waApiKey').value,
+        sender: document.getElementById('waSender').value
+      };
+
+      const res = await apiCall({ action: 'saveWaSettings', data: payload });
+      
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+
+      if(res.success) {
+        alert('Pengaturan WA Gateway berhasil disimpan di database!');
+      } else {
+        alert('Gagal menyimpan pengaturan WA.');
+      }
     }
 
     // 4. FORMS LIST
@@ -614,7 +676,7 @@
               <input type="text" id="fSlug" class="input-control" required pattern="[a-zA-Z0-9-]+" placeholder="promo-sneakers">
             </div>
             <div class="input-group">
-              <label>Nomor WhatsApp Tujuan (Wajib diisi jika ini form order)</label>
+              <label>Nomor WhatsApp Admin (Notif / Redirect)</label>
               <input type="text" id="fWa" class="input-control" placeholder="62812345678" value="62">
             </div>
             <button type="submit" class="btn btn-primary" style="width:100%; padding:16px; font-size:16px;" id="btnSubmitFormTpl">Generate Form Builder</button>
@@ -712,7 +774,6 @@
         try { cfg = JSON.parse(state.currentForm.designConfig); } catch(e){}
       }
       
-      // Merge with default in case new fields were added
       cfg = { ...state.defaultConfig, ...cfg };
 
       showModal(`
@@ -842,7 +903,7 @@
           state.currentForm.description = updateData.description;
           state.currentForm.designConfig = JSON.stringify(newCfg);
           closeModal();
-          refreshBuilderCanvas(); // Refresh visual builder to see updates!
+          refreshBuilderCanvas();
         } else {
           alert("Gagal menyimpan desain.");
           btn.innerHTML = 'Simpan Desain';
@@ -867,13 +928,11 @@
       state.selectedFieldIndex = null;
 
       window.refreshBuilderCanvas = function() {
-        // Parse config
         let cfg = state.defaultConfig;
         if (state.currentForm.designConfig) {
           try { cfg = { ...cfg, ...JSON.parse(state.currentForm.designConfig) }; } catch(e){}
         }
 
-        // Generate Header Style Dinamis
         let headStyle = 'padding: 40px; text-align: center; border-bottom:1px solid var(--border-soft);';
         if (cfg.headerStyle === 'solid') {
           headStyle += ` background: ${cfg.headerColor1};`;
@@ -882,7 +941,6 @@
         }
         headStyle += ` color: ${cfg.headerTextColor};`;
 
-        // Generate Button Style Dinamis
         let btnStyle = `padding: 18px; border-radius: 16px; border:none; width: 100%; font-weight: 800; font-size: 16px; margin-top:24px; color: ${cfg.btnTextColor};`;
         if (cfg.btnStyle === 'solid') {
           btnStyle += ` background: ${cfg.btnColor1};`;
@@ -890,7 +948,6 @@
           btnStyle += ` background: linear-gradient(135deg, ${cfg.btnColor1}, ${cfg.btnColor2});`;
         }
 
-        // Render Canvas (Tengah)
         let canvasHtml = `<div style="${headStyle}">`;
         if (cfg.logoUrl) canvasHtml += `<img src="${cfg.logoUrl}" style="max-height:60px; margin-bottom:16px;">`;
         canvasHtml += `<h2 style="font-size:28px; font-weight:800; margin-bottom:8px;">${state.currentForm.formName}</h2>`;
@@ -920,7 +977,6 @@
         }
         canvasHtml += `</div>`;
 
-        // Render Panel Properti (Kanan)
         let propsHtml = `
           <div style="text-align:center; color:var(--text-soft); padding:40px 0;">
             <i class="ph ph-cursor-click" style="font-size:40px; color:var(--border-soft); margin-bottom:16px;"></i>
