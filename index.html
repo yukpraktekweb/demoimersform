@@ -217,6 +217,38 @@
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
     .modal-close { cursor: pointer; font-size: 24px; color: var(--text-soft); }
 
+    /* ================= FLUENT FORMS STYLE BUILDER ================= */
+    .template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-top: 16px; }
+    .template-card { border: 2px solid var(--border-soft); border-radius: var(--radius-md); padding: 24px 16px; cursor: pointer; transition: .2s; text-align: center; background: var(--bg-card); position: relative; overflow: hidden; }
+    .template-card:hover, .template-card.active { border-color: var(--primary-dark); background: var(--bg-main); transform: translateY(-4px); box-shadow: var(--shadow-sm); }
+    .template-card.active::before { content: '✓'; position: absolute; top: 12px; right: 12px; background: var(--primary-dark); color: #fff; width: 24px; height: 24px; border-radius: 50%; font-size: 14px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+    .template-card i { font-size: 40px; color: var(--primary-dark); margin-bottom: 16px; }
+    .template-card h4 { font-size: 16px; font-weight: 800; margin-bottom: 8px; color: var(--text-main); }
+    .template-card p { font-size: 13px; color: var(--text-soft); }
+
+    .builder-layout { display: grid; grid-template-columns: 240px 1fr 320px; gap: 24px; align-items: start; }
+    
+    .builder-palette { background: var(--bg-card); border-radius: var(--radius-lg); padding: 24px; border: 1px solid var(--border-soft); box-shadow: var(--shadow-sm); }
+    .palette-btn { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px; margin-bottom: 10px; background: #fff; border: 1px solid var(--border-soft); border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; color: var(--text-main); transition: .2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .palette-btn:hover { border-color: var(--primary-dark); background: var(--bg-main); transform: translateX(4px); }
+    .palette-btn i { font-size: 18px; color: var(--text-soft); }
+    
+    .builder-canvas { background: var(--bg-card); border-radius: var(--radius-lg); padding: 40px; border: 1px solid var(--border-soft); min-height: 500px; box-shadow: var(--shadow-sm); }
+    .canvas-field { padding: 20px; border: 2px dashed transparent; border-radius: var(--radius-md); position: relative; cursor: pointer; transition: .2s; margin-bottom: 16px; }
+    .canvas-field:hover { border-color: var(--border-soft); background: var(--bg-main); }
+    .canvas-field.active { border-color: var(--primary); background: #f0fdf9; }
+    .canvas-field-actions { position: absolute; right: 20px; top: 20px; display: none; gap: 8px; z-index: 10; }
+    .canvas-field.active .canvas-field-actions, .canvas-field:hover .canvas-field-actions { display: flex; }
+    
+    .builder-props { background: var(--bg-card); border-radius: var(--radius-lg); padding: 24px; border: 1px solid var(--border-soft); box-shadow: var(--shadow-sm); position: sticky; top: 24px; }
+
+    /* ================= MODERN PUBLIC FORM ================= */
+    .modern-input-wrap { position: relative; margin-bottom: 24px; }
+    .modern-input-wrap label { display: block; font-weight: 700; margin-bottom: 8px; color: var(--text-main); font-size: 15px; }
+    .modern-input { width: 100%; padding: 16px 20px; border: 2px solid var(--border-soft); border-radius: var(--radius-md); font-size: 16px; font-family: var(--font-main); transition: .3s; background: #fdfdfd; color: var(--text-main); }
+    .modern-input:focus { border-color: var(--primary-dark); background: #fff; box-shadow: 0 8px 24px rgba(125,189,176,0.15); outline: none; }
+    .modern-select { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7A7D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 16px center; background-size: 16px; }
+
     /* Code Block untuk Embed */
     .code-block {
       background: #111827;
@@ -267,13 +299,13 @@
     // ================= STATE =================
     const state = {
       isLoggedIn: false,
-      // Menggunakan URL deploy yang baru Anda berikan sebagai default
-      apiUrl: localStorage.getItem('imers_apiUrl') || 'https://script.google.com/macros/s/AKfycbzPJxjrjvVVE5YvSJ-nN0XGotEfzf-mOPfVbmQ6U4fxPl2VxVkgRah6fDfFpsDPeEor/exec',
+      apiUrl: localStorage.getItem('imers_apiUrl') || '',
       forms: [],
       submissions: [],
       invoices: [],
       currentForm: null,
-      currentFields: []
+      currentFields: [],
+      selectedFieldIndex: null // State untuk Drag/Drop visual builder
     };
 
     const getBaseUrl = () => window.location.origin + window.location.pathname;
@@ -654,109 +686,338 @@
     }
 
     function openFormModal() {
+      // 5 Template Keren Standar Fluent Forms
+      const tpls = [
+        { id: 'blank', icon: 'ph-file-dashed', name: 'Form Kosong', desc: 'Mulai desain dari nol' },
+        { id: 'order_fisik', icon: 'ph-package', name: 'Order Barang Fisik', desc: 'Nama, Alamat, WA, Kurir' },
+        { id: 'order_cod', icon: 'ph-truck', name: 'Pemesanan COD', desc: 'Khusus pembayaran di tempat' },
+        { id: 'jasa', icon: 'ph-calendar-check', name: 'Booking Layanan', desc: 'Pilihan Jasa, Tanggal, Jam' },
+        { id: 'digital', icon: 'ph-download-simple', name: 'Produk Digital', desc: 'Nama, Email, Pembayaran' },
+        { id: 'reseller', icon: 'ph-users-three', name: 'Daftar Reseller', desc: 'Pengalaman & Domisili' }
+      ];
+
+      let tplHtml = tpls.map(t => `
+        <div class="template-card ${t.id === 'order_fisik' ? 'active' : ''}" onclick="selectTemplate('${t.id}')" id="tpl-${t.id}">
+          <i class="ph ${t.icon}"></i>
+          <h4>${t.name}</h4>
+          <p>${t.desc}</p>
+        </div>
+      `).join('');
+
       showModal(`
-        <form id="frmCreateForm">
-          <div class="input-group">
-            <label>Nama Form</label>
-            <input type="text" id="fName" class="input-control" required>
-          </div>
-          <div class="input-group">
-            <label>Slug URL (tanpa spasi)</label>
-            <input type="text" id="fSlug" class="input-control" required pattern="[a-zA-Z0-9-]+" placeholder="contoh-form">
-          </div>
-          <div class="input-group">
-            <label>Tipe Form</label>
-            <select id="fType" class="input-control" onchange="document.getElementById('waWrap').style.display = this.value === 'whatsapp_order' ? 'block' : 'none'">
-              <option value="standard">Standard (Simpan Data)</option>
-              <option value="whatsapp_order">WhatsApp Order</option>
-              <option value="invoice">Generate Invoice</option>
-            </select>
-          </div>
-          <div class="input-group" id="waWrap" style="display:none;">
-            <label>Nomor WhatsApp Tujuan (Gunakan kode negara, misal: 62812...)</label>
-            <input type="text" id="fWa" class="input-control">
-          </div>
-          <div class="input-group">
-            <label>Deskripsi (Opsional)</label>
-            <textarea id="fDesc" class="input-control" rows="3"></textarea>
-          </div>
-          <button type="submit" class="btn btn-primary" style="width:100%;">Simpan Form</button>
-        </form>
+        <div id="step1">
+          <h2 class="section-title">1. Pilih Template Form</h2>
+          <div class="template-grid" style="margin-bottom:32px;">${tplHtml}</div>
+          <button class="btn btn-primary" style="width:100%; padding:16px; font-size:16px;" onclick="document.getElementById('step1').style.display='none'; document.getElementById('step2').style.display='block';">Lanjutkan Pengaturan <i class="ph ph-arrow-right"></i></button>
+        </div>
+
+        <div id="step2" style="display:none;">
+          <button class="btn btn-outline" style="margin-bottom:24px;" onclick="document.getElementById('step2').style.display='none'; document.getElementById('step1').style.display='block';"><i class="ph ph-arrow-left"></i> Kembali</button>
+          <h2 class="section-title">2. Detail Form Anda</h2>
+          <form id="frmCreateForm">
+            <input type="hidden" id="fTpl" value="order_fisik">
+            <div class="input-group">
+              <label>Nama Form (Judul Utama)</label>
+              <input type="text" id="fName" class="input-control" required placeholder="Contoh: Order Sepatu Sneakers X">
+            </div>
+            <div class="input-group">
+              <label>Slug URL (Link Unik, Tanpa Spasi)</label>
+              <input type="text" id="fSlug" class="input-control" required pattern="[a-zA-Z0-9-]+" placeholder="promo-sneakers">
+            </div>
+            <div class="input-group">
+              <label>Nomor WhatsApp Tujuan (Wajib diisi jika ini form order)</label>
+              <input type="text" id="fWa" class="input-control" placeholder="62812345678" value="62">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; padding:16px; font-size:16px;" id="btnSubmitFormTpl">Generate Form Builder</button>
+          </form>
+        </div>
       `);
+
+      window.selectTemplate = function(id) {
+        document.querySelectorAll('.template-card').forEach(el => el.classList.remove('active'));
+        document.getElementById('tpl-'+id).classList.add('active');
+        document.getElementById('fTpl').value = id;
+      };
 
       document.getElementById('frmCreateForm').onsubmit = async (e) => {
         e.preventDefault();
-        const data = {
-          formName: document.getElementById('fName').value,
-          slug: document.getElementById('fSlug').value.toLowerCase(),
-          type: document.getElementById('fType').value,
-          whatsappNumber: document.getElementById('fWa').value,
-          description: document.getElementById('fDesc').value
+        
+        // Blueprint untuk setiap template
+        const blueprints = {
+          'blank': [],
+          'order_fisik': [
+            { name:'nama_lengkap', label:'Nama Lengkap Anda', type:'text', required:true },
+            { name:'no_wa', label:'Nomor WhatsApp Aktif', type:'number', required:true, helpText:'Kami akan menghubungi Anda ke nomor ini' },
+            { name:'alamat_lengkap', label:'Alamat Lengkap Pengiriman', type:'textarea', required:true, helpText:'Sertakan RT/RW, Kelurahan, Kecamatan, dan Kodepos' },
+            { name:'pilihan_kurir', label:'Pilih Ekspedisi', type:'select', required:true, options:'JNE, J&T Express, SiCepat, AnterAja' },
+            { name:'catatan', label:'Catatan / Warna / Ukuran', type:'text', required:false }
+          ],
+          'order_cod': [
+            { name:'nama_penerima', label:'Nama Penerima Barang', type:'text', required:true },
+            { name:'no_wa', label:'Nomor WA (Wajib Aktif)', type:'number', required:true, helpText:'Kurir akan menelepon nomor ini saat sampai' },
+            { name:'alamat_cod', label:'Alamat Sangat Lengkap', type:'textarea', required:true, helpText:'Kecamatan, Desa, Jalan, dan Nomor Rumah' },
+            { name:'patokan', label:'Patokan Rumah', type:'text', required:false, helpText:'Contoh: Samping masjid hijau' }
+          ],
+          'jasa': [
+            { name:'nama_klien', label:'Nama Pemesan', type:'text', required:true },
+            { name:'layanan', label:'Pilih Layanan', type:'select', required:true, options:'Paket Standar, Paket Premium, Konsultasi Custom' },
+            { name:'tanggal', label:'Tanggal Kedatangan', type:'date', required:true },
+            { name:'keluhan', label:'Ceritakan Masalah/Kebutuhan Anda', type:'textarea', required:true }
+          ],
+          'digital': [
+            { name:'nama', label:'Nama Lengkap', type:'text', required:true },
+            { name:'email', label:'Alamat Email', type:'email', required:true, helpText:'Akses/Produk akan dikirim ke email ini' },
+            { name:'no_wa', label:'Nomor WhatsApp', type:'number', required:true },
+            { name:'metode_bayar', label:'Transfer Melalui', type:'select', required:true, options:'Bank BCA, Bank Mandiri, QRIS, DANA' }
+          ],
+          'reseller': [
+            { name:'nama', label:'Nama Pendaftar', type:'text', required:true },
+            { name:'domisili', label:'Kota Domisili', type:'text', required:true },
+            { name:'pengalaman', label:'Punya Pengalaman Jualan?', type:'select', required:true, options:'Ya Pernah, Belum Pernah Sama Sekali' },
+            { name:'alasan', label:'Mengapa Anda ingin bergabung?', type:'textarea', required:true }
+          ]
         };
-        const res = await apiCall({ action: 'saveForm', data });
+
+        const tplId = document.getElementById('fTpl').value;
+        const fields = blueprints[tplId] || [];
+        const btn = document.getElementById('btnSubmitFormTpl');
+        
+        const data = {
+          form: {
+            formName: document.getElementById('fName').value,
+            slug: document.getElementById('fSlug').value.toLowerCase(),
+            type: 'whatsapp_order', // Secara default jadikan WA agar redirect keren
+            whatsappNumber: document.getElementById('fWa').value
+          },
+          fields: fields
+        };
+        
+        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menyiapkan Builder...';
+        btn.disabled = true;
+        
+        const res = await apiCall({ action: 'createFromTemplate', data });
         if(res.success) {
           closeModal();
           window.location.hash = '#/builder/' + res.data.formId;
         } else {
           alert(res.message);
+          btn.innerHTML = 'Generate Form Builder';
+          btn.disabled = false;
         }
       };
     }
 
-    function openFieldModal() {
-      showModal(`
-        <form id="frmCreateField">
-          <div class="input-group">
-            <label>Label Field</label>
-            <input type="text" id="flLabel" class="input-control" required placeholder="Misal: Nama Lengkap" onkeyup="document.getElementById('flName').value = this.value.toLowerCase().replace(/[^a-z0-9]/g, '_')">
-          </div>
-          <div class="input-group">
-            <label>Name Attribute (Kode unik kolom)</label>
-            <input type="text" id="flName" class="input-control" required>
-          </div>
-          <div class="input-group">
-            <label>Tipe Input</label>
-            <select id="flType" class="input-control" onchange="document.getElementById('optWrap').style.display = this.value === 'select' ? 'block' : 'none'">
-              <option value="text">Text Pendek</option>
-              <option value="email">Email</option>
-              <option value="number">Angka</option>
-              <option value="textarea">Text Panjang (Textarea)</option>
-              <option value="select">Dropdown (Select)</option>
-            </select>
-          </div>
-          <div class="input-group" id="optWrap" style="display:none;">
-            <label>Pilihan (Pisahkan dengan koma)</label>
-            <input type="text" id="flOpt" class="input-control" placeholder="Merah, Biru, Hijau">
-          </div>
-          <div class="input-group">
-            <label>Help Text (Opsional)</label>
-            <input type="text" id="flHelp" class="input-control" placeholder="Penjelasan kecil di bawah input">
-          </div>
-          <div class="input-group">
-            <label><input type="checkbox" id="flReq" checked> Wajib Diisi (Required)</label>
-          </div>
-          <button type="submit" class="btn btn-primary" style="width:100%;">Tambah Field</button>
-        </form>
-      `);
+    // Builder Visual Baru (Pengganti renderBuilder Lama & openFieldModal)
+    async function renderBuilder(container, formId) {
+      if(!state.forms.length) {
+        const resForm = await apiCall({ action: 'getForms' });
+        state.forms = resForm.data || [];
+      }
+      const form = state.forms.find(f => f.formId === formId);
+      if(!form) return window.location.hash = '#/forms';
 
-      document.getElementById('frmCreateField').onsubmit = async (e) => {
-        e.preventDefault();
-        const data = {
-          formId: state.currentForm.formId,
-          label: document.getElementById('flLabel').value,
-          name: document.getElementById('flName').value,
-          type: document.getElementById('flType').value,
-          options: document.getElementById('flOpt').value,
-          helpText: document.getElementById('flHelp').value,
-          required: document.getElementById('flReq').checked,
-          orderIndex: state.currentFields.length + 1
-        };
-        const res = await apiCall({ action: 'saveField', data });
-        if(res.success) {
-          closeModal();
-          router(); // refresh builder
+      state.currentForm = form;
+      
+      const resFields = await apiCall({ action: 'getFields', formId: formId });
+      state.currentFields = resFields.data || [];
+      state.selectedFieldIndex = null;
+
+      window.refreshBuilderCanvas = function() {
+        // Render Canvas (Tengah)
+        let canvasHtml = '';
+        if(state.currentFields.length === 0) {
+          canvasHtml = `<div style="text-align:center; padding:60px 20px; color:var(--text-soft); border:2px dashed var(--border-soft); border-radius:var(--radius-md);">Belum ada field di form ini. <br>Klik menu di panel sebelah kiri untuk mulai.</div>`;
+        } else {
+          state.currentFields.forEach((f, index) => {
+            const isActive = state.selectedFieldIndex === index ? 'active' : '';
+            canvasHtml += `
+              <div class="canvas-field ${isActive}" onclick="selectField(${index})">
+                <div class="canvas-field-actions">
+                  <button class="btn btn-outline" style="padding:6px; font-size:14px; height:32px; width:32px; background:#fff;" onclick="event.stopPropagation(); moveField(${index}, -1)" ${index === 0 ? 'disabled' : ''}><i class="ph ph-arrow-up"></i></button>
+                  <button class="btn btn-outline" style="padding:6px; font-size:14px; height:32px; width:32px; background:#fff;" onclick="event.stopPropagation(); moveField(${index}, 1)" ${index === state.currentFields.length - 1 ? 'disabled' : ''}><i class="ph ph-arrow-down"></i></button>
+                  <button class="btn btn-danger" style="padding:6px; font-size:14px; height:32px; width:32px;" onclick="event.stopPropagation(); removeField(${index})"><i class="ph ph-trash"></i></button>
+                </div>
+                <label style="display:block; font-weight:700; margin-bottom:8px; font-size:15px;">${f.label} ${f.required ? '<span style="color:var(--danger-text)">*</span>' : ''}</label>
+                <input class="modern-input ${f.type==='select'?'modern-select':''}" type="text" placeholder="${f.type === 'select' ? 'Pilihan Dropdown' : f.type === 'textarea' ? 'Kolom Teks Panjang...' : f.type === 'date' ? 'Pilih Tanggal' : 'Jawaban Teks...'}" disabled style="background:#f9f9f9; border-color:#e0e0e0;">
+                ${f.helpText ? `<div style="font-size:13px; color:var(--text-soft); margin-top:6px;">${f.helpText}</div>` : ''}
+              </div>
+            `;
+          });
+        }
+
+        // Render Panel Properti (Kanan)
+        let propsHtml = `
+          <div style="text-align:center; color:var(--text-soft); padding:40px 0;">
+            <i class="ph ph-cursor-click" style="font-size:40px; color:var(--border-soft); margin-bottom:16px;"></i>
+            <p>Pilih salah satu kotak field di area tengah untuk mengedit propertinya.</p>
+          </div>
+        `;
+        
+        if (state.selectedFieldIndex !== null && state.currentFields[state.selectedFieldIndex]) {
+          const f = state.currentFields[state.selectedFieldIndex];
+          propsHtml = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+              <h3 style="font-size:18px; font-weight:800;">Pengaturan Field</h3>
+              <span class="badge" style="background:var(--bg-main); color:var(--text-soft)">ID: ${state.selectedFieldIndex + 1}</span>
+            </div>
+            <div class="input-group">
+              <label>Label Pertanyaan</label>
+              <input type="text" class="input-control" value="${f.label}" onkeyup="updateFieldProp('label', this.value)">
+            </div>
+            <div class="input-group">
+              <label>Name Attribute (Sistem)</label>
+              <input type="text" class="input-control" value="${f.name}" onkeyup="updateFieldProp('name', this.value)" style="font-family:monospace; font-size:13px; background:#f4f4f4;">
+            </div>
+            <div class="input-group">
+              <label>Tipe Input</label>
+              <select class="input-control" onchange="updateFieldProp('type', this.value)">
+                <option value="text" ${f.type==='text'?'selected':''}>Teks Pendek</option>
+                <option value="email" ${f.type==='email'?'selected':''}>Format Email</option>
+                <option value="number" ${f.type==='number'?'selected':''}>Angka / No Telepon</option>
+                <option value="textarea" ${f.type==='textarea'?'selected':''}>Teks Panjang (Paragraf)</option>
+                <option value="select" ${f.type==='select'?'selected':''}>Pilihan Dropdown</option>
+                <option value="date" ${f.type==='date'?'selected':''}>Tanggal Lengkap</option>
+              </select>
+            </div>
+            <div class="input-group" id="prop-options" style="display:${f.type==='select'?'block':'none'}">
+              <label>Daftar Pilihan</label>
+              <input type="text" class="input-control" value="${f.options || ''}" onkeyup="updateFieldProp('options', this.value)" placeholder="Merah, Biru, Hijau">
+              <div style="font-size:12px; color:var(--text-soft); margin-top:4px;">Pisahkan antar pilihan dengan tanda koma (,)</div>
+            </div>
+            <div class="input-group">
+              <label>Teks Bantuan (Help Text)</label>
+              <input type="text" class="input-control" value="${f.helpText || ''}" onkeyup="updateFieldProp('helpText', this.value)" placeholder="Penjelasan tambahan...">
+            </div>
+            <div style="padding:16px; background:var(--bg-main); border-radius:var(--radius-sm); margin-top:24px;">
+              <label style="display:flex; align-items:center; gap:12px; font-weight:700; cursor:pointer;">
+                <input type="checkbox" ${f.required ? 'checked' : ''} onchange="updateFieldProp('required', this.checked)" style="transform:scale(1.5);"> 
+                Wajib Diisi (Required)
+              </label>
+            </div>
+          `;
+        }
+
+        document.getElementById('b-canvas').innerHTML = canvasHtml;
+        document.getElementById('b-props').innerHTML = propsHtml;
+      };
+
+      // Aksi Penambahan dari Kiri
+      window.addField = function(type, label) {
+        state.currentFields.push({
+          formId: formId,
+          label: label,
+          name: label.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Math.floor(Math.random()*100),
+          type: type,
+          required: true,
+          options: type === 'select' ? 'Pilihan 1, Pilihan 2, Pilihan 3' : '',
+          helpText: ''
+        });
+        state.selectedFieldIndex = state.currentFields.length - 1;
+        refreshBuilderCanvas();
+      };
+      
+      window.selectField = function(index) {
+        state.selectedFieldIndex = index;
+        refreshBuilderCanvas();
+      };
+
+      window.updateFieldProp = function(prop, value) {
+        if(state.selectedFieldIndex !== null) {
+          state.currentFields[state.selectedFieldIndex][prop] = value;
+          
+          if(prop === 'type') {
+            const optDiv = document.getElementById('prop-options');
+            if(optDiv) optDiv.style.display = value === 'select' ? 'block' : 'none';
+          }
+          
+          // Re-render hanya canvas untuk mencegah input di property panel kehilangan fokus
+          let canvasHtml = '';
+          state.currentFields.forEach((f, idx) => {
+            const isActive = state.selectedFieldIndex === idx ? 'active' : '';
+            canvasHtml += `
+              <div class="canvas-field ${isActive}" onclick="selectField(${idx})">
+                <div class="canvas-field-actions">
+                  <button class="btn btn-outline" style="padding:6px; font-size:14px; height:32px; width:32px; background:#fff;" onclick="event.stopPropagation(); moveField(${idx}, -1)" ${idx === 0 ? 'disabled' : ''}><i class="ph ph-arrow-up"></i></button>
+                  <button class="btn btn-outline" style="padding:6px; font-size:14px; height:32px; width:32px; background:#fff;" onclick="event.stopPropagation(); moveField(${idx}, 1)" ${idx === state.currentFields.length - 1 ? 'disabled' : ''}><i class="ph ph-arrow-down"></i></button>
+                  <button class="btn btn-danger" style="padding:6px; font-size:14px; height:32px; width:32px;" onclick="event.stopPropagation(); removeField(${idx})"><i class="ph ph-trash"></i></button>
+                </div>
+                <label style="display:block; font-weight:700; margin-bottom:8px; font-size:15px;">${f.label} ${f.required ? '<span style="color:var(--danger-text)">*</span>' : ''}</label>
+                <input class="modern-input ${f.type==='select'?'modern-select':''}" type="text" placeholder="${f.type === 'select' ? 'Pilihan Dropdown' : f.type === 'textarea' ? 'Kolom Teks Panjang...' : f.type === 'date' ? 'Pilih Tanggal' : 'Jawaban Teks...'}" disabled style="background:#f9f9f9; border-color:#e0e0e0;">
+                ${f.helpText ? `<div style="font-size:13px; color:var(--text-soft); margin-top:6px;">${f.helpText}</div>` : ''}
+              </div>
+            `;
+          });
+          document.getElementById('b-canvas').innerHTML = canvasHtml;
         }
       };
+
+      window.moveField = function(index, direction) {
+        const targetIndex = index + direction;
+        if(targetIndex >= 0 && targetIndex < state.currentFields.length) {
+          const temp = state.currentFields[index];
+          state.currentFields[index] = state.currentFields[targetIndex];
+          state.currentFields[targetIndex] = temp;
+          state.selectedFieldIndex = targetIndex;
+          refreshBuilderCanvas();
+        }
+      };
+
+      window.removeField = function(index) {
+        if(confirm('Yakin ingin menghapus field ini?')) {
+          state.currentFields.splice(index, 1);
+          state.selectedFieldIndex = null;
+          refreshBuilderCanvas();
+        }
+      };
+
+      window.saveBuilder = async function() {
+        const btn = document.getElementById('btnSaveBuilder');
+        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menyimpan...';
+        
+        const res = await apiCall({ action: 'saveAllFields', formId: formId, fields: state.currentFields });
+        
+        btn.innerHTML = '<i class="ph ph-floppy-disk"></i> Simpan Desain Form';
+        if(res.success) alert('Struktur Form Berhasil Disimpan!');
+        else alert(res.message);
+      };
+
+      // Tampilan Utama Builder
+      container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:32px;">
+          <div style="display:flex; gap:16px; align-items:center;">
+            <a href="#/forms" class="btn btn-outline" style="padding:12px;"><i class="ph ph-arrow-left"></i></a>
+            <div>
+              <h1 class="page-title" style="margin:0; font-size:24px;">Builder: ${form.formName}</h1>
+              <div style="font-size:13px; color:var(--text-soft); margin-top:4px;">Atur, geser, dan desain form Anda secara visual.</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:16px;">
+             <button class="btn btn-outline" style="padding:14px 20px;" onclick="openEmbedModal('${form.slug}')"><i class="ph ph-code"></i> Dapatkan Embed Script</button>
+             <button class="btn btn-primary" id="btnSaveBuilder" style="padding:14px 24px;" onclick="saveBuilder()"><i class="ph ph-floppy-disk"></i> Simpan Desain Form</button>
+          </div>
+        </div>
+
+        <div class="builder-layout">
+          <!-- Kiri: Elemen Input -->
+          <div class="builder-palette">
+            <h3 style="font-size:12px; margin-bottom:16px; color:var(--text-soft); text-transform:uppercase; letter-spacing:1px; font-weight:800;">Komponen Tersedia</h3>
+            <button class="palette-btn" onclick="addField('text', 'Teks Pendek')"><i class="ph ph-text-t"></i> Teks Pendek</button>
+            <button class="palette-btn" onclick="addField('textarea', 'Teks Panjang')"><i class="ph ph-paragraph"></i> Paragraf Teks</button>
+            <button class="palette-btn" onclick="addField('number', 'Nomor Telepon')"><i class="ph ph-phone"></i> Angka / WA</button>
+            <button class="palette-btn" onclick="addField('email', 'Alamat Email')"><i class="ph ph-envelope"></i> Email</button>
+            <button class="palette-btn" onclick="addField('select', 'Pilihan Ganda')"><i class="ph ph-list-dashes"></i> Dropdown Select</button>
+            <button class="palette-btn" onclick="addField('date', 'Pilih Tanggal')"><i class="ph ph-calendar"></i> Kalender/Tanggal</button>
+          </div>
+
+          <!-- Tengah: Canvas (Visual) -->
+          <div class="builder-canvas" id="b-canvas"></div>
+
+          <!-- Kanan: Properti (Pengaturan) -->
+          <div class="builder-props" id="b-props"></div>
+        </div>
+      `;
+
+      refreshBuilderCanvas();
     }
 
     // ================= EMBED GENERATOR =================
@@ -916,12 +1177,11 @@
 
     // ================= PUBLIC PAGES (RENDERER) =================
 
-    // 7. PUBLIC FORM RENDERER
+    // 7. PUBLIC FORM RENDERER (Desain Baru Keren)
     async function renderPublicForm(slug) {
       appDiv.innerHTML = `<div class="public-layout"><div class="loader"></div></div>`;
       
       try {
-        // Fetch via GET gas API (Membutuhkan URL API di lokal storage, untuk demo ini kita fallback jika user mengakses langsung tanpa masuk admin)
         const apiUrl = state.apiUrl || localStorage.getItem('imers_apiUrl');
         if(!apiUrl) return appDiv.innerHTML = `<div class="public-layout"><div class="card">Sistem belum dikonfigurasi (API URL hilang).</div></div>`;
 
@@ -935,34 +1195,37 @@
 
         let fieldsHtml = '';
         fields.forEach(f => {
-          fieldsHtml += `<div class="input-group"><label>${f.label}${f.required?' <span style="color:var(--danger-text)">*</span>':''}</label>`;
+          fieldsHtml += `<div class="modern-input-wrap"><label>${f.label}${f.required?' <span style="color:var(--danger-text)">*</span>':''}</label>`;
           
           if(f.type === 'textarea') {
-            fieldsHtml += `<textarea class="input-control" name="${f.name}" rows="4" ${f.required?'required':''}></textarea>`;
+            fieldsHtml += `<textarea class="modern-input" name="${f.name}" rows="4" placeholder="Ketik di sini..." ${f.required?'required':''}></textarea>`;
           } else if(f.type === 'select') {
-            fieldsHtml += `<select class="input-control" name="${f.name}" ${f.required?'required':''}><option value="">Pilih...</option>`;
+            fieldsHtml += `<select class="modern-input modern-select" name="${f.name}" ${f.required?'required':''}><option value="">- Pilih Salah Satu -</option>`;
             if(f.options) {
                f.options.split(',').forEach(opt => fieldsHtml += `<option value="${opt.trim()}">${opt.trim()}</option>`);
             }
             fieldsHtml += `</select>`;
           } else {
-            fieldsHtml += `<input class="input-control" type="${f.type}" name="${f.name}" ${f.required?'required':''}>`;
+            // Support type date, number, email, text
+            fieldsHtml += `<input class="modern-input" type="${f.type}" name="${f.name}" placeholder="${f.type === 'date' ? '' : 'Ketik di sini...'}" ${f.required?'required':''}>`;
           }
           
-          if(f.helpText) fieldsHtml += `<div style="font-size:12px; color:var(--text-soft); margin-top:6px;">${f.helpText}</div>`;
+          if(f.helpText) fieldsHtml += `<div style="font-size:13px; color:var(--text-soft); margin-top:8px;">${f.helpText}</div>`;
           fieldsHtml += `</div>`;
         });
 
         appDiv.innerHTML = `
-          <div class="public-layout">
-            <div class="card" style="width:100%; max-width:600px; padding:40px;">
-              <h1 style="font-size:32px; font-weight:800; margin-bottom:8px;">${form.formName}</h1>
-              <p style="color:var(--text-soft); margin-bottom:32px; font-size:15px; line-height:1.6;">${form.description || ''}</p>
+          <div class="public-layout" style="background: linear-gradient(180deg, #E6EFEC 0%, var(--bg-main) 100%);">
+            <div class="card" style="width:100%; max-width:640px; padding:48px; border-radius:32px; box-shadow: 0 32px 64px rgba(31,42,46,0.06); border:none;">
+              <div style="text-align:center; margin-bottom:40px;">
+                <h1 style="font-size:36px; font-weight:800; margin-bottom:12px; color:var(--text-main);">${form.formName}</h1>
+                ${form.description ? `<p style="color:var(--text-soft); font-size:16px; line-height:1.6;">${form.description}</p>` : `<p style="color:var(--text-soft); font-size:16px;">Silakan lengkapi data pemesanan di bawah ini.</p>`}
+              </div>
               
               <form id="pubForm">
                 ${fieldsHtml}
-                <button type="submit" class="btn btn-primary" style="width:100%; padding:16px; font-size:16px; border-radius:16px; margin-top:16px;" id="btnPubSubmit">Kirim Data</button>
-                <div id="pubMsg" style="margin-top:16px;"></div>
+                <button type="submit" class="btn btn-primary" style="width:100%; padding:20px; font-size:18px; border-radius:18px; margin-top:24px; box-shadow: 0 12px 24px rgba(159,231,215,.4);" id="btnPubSubmit">Kirim Pesanan Sekarang</button>
+                <div id="pubMsg" style="margin-top:24px; text-align:center;"></div>
               </form>
             </div>
           </div>
